@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension version="2.6.0" type="plugin" group="vmpayment">
+    <name>VM - Paymentsense</name>
+    <creationDate>January 31 2019</creationDate>
+    <author>Paymentsense</author>
+    <authorUrl>http://www.paymentsense.co.uk</authorUrl>
+    <copyright>Copyright (C) 2019 PaymentSense. All rights reserved.</copyright>
+    <license>https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
+    <version>2.6.0</version>
+    <element>paymentsense</element>
+    <description>Paymentsense payment plugin for VirtueMart, allowing you to take payments via Paymentsense. The plugin provides integration with the Paymentsense Hosted payment method.</description>
+    <files>
+        <filename plugin="paymentsense">paymentsense.php</filename>
+    </files>
+    <vmconfig>
+        <fields name="params">
+            <fieldset name="payment" addfieldpath="/administrator/components/com_virtuemart/fields" >
+                <field type="text" required="true" name="merchant_id" size="50" label="Merchant ID" description="Your PaymentSense Merchant ID"/>
+                <field type="text" required="true" name="merchant_password" size="50" label="Merchant Password" description="Your PaymentSense Merchant Password"/>
+                <field type="text" required="true" name="merchant_psk" size="50" label="Merchant Pre-Shared Key" description="Your PaymentSense Merchant Pre-Shared Key, as found in the PaymentSense Merchant Management System"/>
+            </fieldset>
+        </fields>
+    </vmconfig>
+</extension>
