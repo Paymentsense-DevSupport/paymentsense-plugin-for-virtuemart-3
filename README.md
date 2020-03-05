@@ -20,7 +20,7 @@ Configuration
 3. Set the Payment Method Information by entering a **Payment Name** of your wish, setting **Published** to **Yes** and selecting **VM - Paymentsense** as a **Payment Method**
 4. Click the **Save** button
 5. Click on the **Configuration** tab label
-6. Set the Paymentsense gateway credentials and pre-shared key as per their respective values in your MMS
+6. Set the Paymentsense gateway credentials, pre-shared key and hash method as per their respective values in your MMS
 7. Click the **Save** button
 
 

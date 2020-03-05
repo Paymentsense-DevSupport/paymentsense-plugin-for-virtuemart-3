@@ -1,23 +1,54 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<extension version="2.6.0" type="plugin" group="vmpayment">
+<extension version="3.0.0" type="plugin" group="vmpayment">
     <name>VM - Paymentsense</name>
-    <creationDate>January 31 2019</creationDate>
-    <author>Paymentsense</author>
+    <creationDate>March 05 2020</creationDate>
+    <author>Paymentsense Ltd.</author>
     <authorUrl>http://www.paymentsense.co.uk</authorUrl>
-    <copyright>Copyright (C) 2019 PaymentSense. All rights reserved.</copyright>
+    <copyright>Copyright (C) 2020 PaymentSense. All rights reserved.</copyright>
     <license>https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
-    <version>2.6.0</version>
+    <version>3.0.0</version>
     <element>paymentsense</element>
-    <description>Paymentsense payment plugin for VirtueMart, allowing you to take payments via Paymentsense. The plugin provides integration with the Paymentsense Hosted payment method.</description>
+    <description>
+        Paymentsense payment plugin for VirtueMart, allowing you to take payments via Paymentsense. The plugin provides integration with the Paymentsense Hosted payment method.
+    </description>
     <files>
         <filename plugin="paymentsense">paymentsense.php</filename>
+        <folder>paymentsense</folder>
     </files>
     <vmconfig>
         <fields name="params">
-            <fieldset name="payment" addfieldpath="/administrator/components/com_virtuemart/fields" >
-                <field type="text" required="true" name="merchant_id" size="50" label="Merchant ID" description="Your PaymentSense Merchant ID"/>
-                <field type="text" required="true" name="merchant_password" size="50" label="Merchant Password" description="Your PaymentSense Merchant Password"/>
-                <field type="text" required="true" name="merchant_psk" size="50" label="Merchant Pre-Shared Key" description="Your PaymentSense Merchant Pre-Shared Key, as found in the PaymentSense Merchant Management System"/>
+            <fieldset name="payment" addfieldpath="/administrator/components/com_virtuemart/fields">
+                <field type="text"
+                       required="true"
+                       name="gateway_merchant_id"
+                       size="60"
+                       label="Gateway MerchantID"
+                       description="This is the gateway MerchantID not used with the MMS login, e.g. ABCDEF-1234567."
+                />
+                <field type="text"
+                       required="true"
+                       name="gateway_password"
+                       size="60"
+                       label="Gateway Password"
+                       description="This is the gateway Password not used with the MMS login. The Password should use lower case and uppercase letters, and numbers only."
+                />
+                <field type="text"
+                       required="true"
+                       name="gateway_presharedkey"
+                       size="60"
+                       label="Gateway PreSharedKey"
+                       description="Your PaymentSense Merchant Pre-Shared Key, as found in the PaymentSense Merchant Management System."
+                />
+                <field type="list"
+                       name="gateway_hash_method"
+                       default="SHA1"
+                       label="Gateway Hash Method"
+                       description="This is the hash method set in MMS under 'Account Admin' > 'Account Settings'. By default, this will be SHA1.">
+                    <option value="SHA1">SHA1</option>
+                    <option value="MD5">MD5</option>
+                    <option value="HMACSHA1">HMACSHA1</option>
+                    <option value="HMACMD5">HMACMD5</option>
+                </field>
             </fieldset>
         </fields>
     </vmconfig>
