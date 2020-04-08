@@ -1,7 +1,7 @@
 <?php
 /**
  * Paymentsense Plugin for VirtueMart 3
- * Version: 3.0.0
+ * Version: 3.0.1
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @version     3.0.0
+ * @version     3.0.1
  * @author      Paymentsense
  * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-2.0.html

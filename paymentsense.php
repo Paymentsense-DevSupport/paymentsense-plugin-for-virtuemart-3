@@ -1,7 +1,7 @@
 <?php
 /**
  * Paymentsense Plugin for VirtueMart 3
- * Version: 3.0.0
+ * Version: 3.0.1
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @version     3.0.0
+ * @version     3.0.1
  * @author      Paymentsense
  * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-2.0.html
@@ -97,9 +97,44 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
     public function __construct(&$subject, $config)
 	{
 		parent::__construct($subject, $config);
+        $this->tableFields = array_keys($this->getTableSQLFields());
 		$this->setConfigParameterable($this->_configTableFieldName, $this->getVarsToPush());
         $this->_debug = self::DEBUG;
 	}
+
+    /**
+     * Creates the table for this plugin if it does not yet exist.
+     * @return string
+     * @since N/A
+     */
+    public function getVmPluginCreateTableSQL()
+    {
+        return $this->createTableSQL('Payment Standard Table');
+    }
+
+    /**
+     * Gets the fields to create the payment table.
+     * @return array
+     * @since N/A
+     */
+    public function getTableSQLFields()
+    {
+        $SQLfields = array(
+            'id'                          => 'int(1) UNSIGNED NOT NULL AUTO_INCREMENT',
+            'virtuemart_order_id'         => 'int(1) UNSIGNED',
+            'order_number'                => 'char(64)',
+            'virtuemart_paymentmethod_id' => 'mediumint(1) UNSIGNED',
+            'payment_name'                => 'varchar(5000)',
+            'payment_order_total'         => 'decimal(15,5) NOT NULL DEFAULT \'0.00000\'',
+            'payment_currency'            => 'char(3)',
+            'email_currency'              => 'char(3)',
+            'cost_per_transaction'        => 'decimal(10,2)',
+            'cost_percent_total'          => 'decimal(10,2)',
+            'tax_id'                      => 'smallint(1)'
+        );
+
+        return $SQLfields;
+    }
 
 	/**
 	 * Prepares and submits the output containing the redirect to the Hosted Payment Form
