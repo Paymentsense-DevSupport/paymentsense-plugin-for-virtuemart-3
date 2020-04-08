@@ -1,7 +1,7 @@
 <?php
 /**
  * Paymentsense Plugin for VirtueMart 3
- * Version: 3.0.1
+ * Version: 3.0.2
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @version     3.0.1
+ * @version     3.0.2
  * @author      Paymentsense
  * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-2.0.html
@@ -421,6 +421,16 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
     }
 
     /**
+     * Gets the setting for forcing the notifications to HTTP
+     *
+     * @return string
+     */
+    protected function getForceNotificationsToHttp()
+    {
+        return $this->method->force_notif_to_http;
+    }
+
+    /**
      * Gets the Paymentsense Hosted Payment Form URL
      *
      * @return string
@@ -453,8 +463,14 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
      */
     protected function getNotificationUrl()
     {
+        $url = JURI::root();
+
+        if ($this->getForceNotificationsToHttp() == '1') {
+            $url = preg_replace('/^https:/i', 'http:', $url);
+        }
+
         return JROUTE::_(
-            JURI::root() .
+            $url .
             'index.php?option=com_virtuemart' .
             '&view=pluginresponse' .
             '&task=pluginnotification' .
