@@ -1,7 +1,7 @@
 <?php
 /**
  * Paymentsense Plugin for VirtueMart 3
- * Version: 3.0.2
+ * Version: 3.0.3
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -13,7 +13,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @version     3.0.2
+ * @version     3.0.3
  * @author      Paymentsense
  * @copyright   2020 Paymentsense Ltd.
  * @license     https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,6 +27,16 @@ if (!class_exists('vmPSPlugin')) {
 
 class plgVmPaymentPaymentsense extends vmPSPlugin
 {
+    /**
+     * Module name. Used in the module information reporting
+     */
+    const MODULE_NAME = 'Paymentsense Module for VirtueMart';
+
+    /**
+     * Module version
+     */
+    const MODULE_VERSION = '3.0.3';
+
     /**
      * VirtueMart Debug Flag
      */
@@ -68,6 +78,12 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
     const MSG_HASH_DIGEST_ERROR = 'Invalid or empty hash digest.';
 
     /**
+     * Content types of the output of the module information
+     */
+    const TYPE_APPLICATION_JSON = 'application/json';
+    const TYPE_TEXT_PLAIN       = 'text/plain';
+
+    /**
      * @var object
      * VirtueMart Plugin Method
      */
@@ -92,6 +108,16 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
     protected $responseVars = array(
         'status_code' => '',
         'message'     => ''
+    );
+
+    /**
+     * Supported content types of the output of the module information
+     *
+     * @var array
+     */
+    protected $contentTypes = array(
+        'json' => self::TYPE_APPLICATION_JSON,
+        'text' => self::TYPE_TEXT_PLAIN
     );
 
     public function __construct(&$subject, $config)
@@ -164,6 +190,7 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
 
     /**
      * Handler of the payment notification sent to the ServerResultURL
+     * and the module information request
      *
      * @return bool|null
      *
@@ -203,6 +230,16 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
                 $this->setSuccessResponse();
             }
             $this->outputResponse();
+        } else {
+            switch ($this->getModuleInfoRequest()) {
+                case 'info';
+                    $this->processInfoRequest();
+                    break;
+                case 'checksums';
+                    $this->processChecksumsRequest();
+                    break;
+                default:
+            }
         }
         $this->logInfo(__METHOD__ . ': ' . var_export($result, true), 'message');
         return $result;
@@ -286,6 +323,40 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
         }
         $this->logInfo(__METHOD__ . ': ' . var_export($result, true), 'message');
         return $result;
+    }
+
+    /**
+     * Processes the request for plugin information
+     */
+    protected function processInfoRequest()
+    {
+        $info = array(
+            'Module Name'              => $this->getModuleInternalName(),
+            'Module Installed Version' => $this->getModuleInstalledVersion()
+        );
+        if (($this->isModuleExtendedInfoRequest())) {
+            $extended_info   = array_merge(
+                array(
+                    'Module Latest Version' => $this->getModuleLatestVersion(),
+                    'Joomla Version'        => $this->getJoomlaVersion(),
+                    'VirtueMart Version'    => $this->getVmVersion(),
+                    'PHP Version'           => $this->getPhpVersion()
+                )
+            );
+            $info = array_merge($info, $extended_info);
+        }
+        $this->outputInfo($info);
+    }
+
+    /**
+     * Processes the request for file checksums
+     */
+    protected function processChecksumsRequest()
+    {
+        $info = array(
+            'Checksums' => $this->getFileChecksums(),
+        );
+        $this->outputInfo($info);
     }
 
     /**
@@ -503,10 +574,12 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
 
         $fields = array_map(
             function ($value) {
-                return $value === null ? '' : $value;
+                return $value === null ? '' : $this->filterUnsupportedChars($value);
             },
             $fields
         );
+
+        $fields = $this->applyLengthRestrictions($fields);
 
         $data  = 'MerchantID=' . $this->getMerchantId();
         $data .= '&Password=' . $this->getPassword();
@@ -903,7 +976,7 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
 
     /**
      * Calculates the hash digest.
-     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1
+     * Supported hash methods: MD5, SHA1, HMACMD5, HMACSHA1, HMACSHA256 and HMACSHA512
      *
      * @param string $data Data to be hashed.
      * @param string $hashMethod Hash method.
@@ -929,6 +1002,12 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
                 break;
             case 'HMACSHA1':
                 $result = hash_hmac('sha1', $data, $key);
+                break;
+            case 'HMACSHA256':
+                $result = hash_hmac('sha256', $data, $key);
+                break;
+            case 'HMACSHA512':
+                $result = hash_hmac('sha512', $data, $key);
                 break;
         }
         return $result;
@@ -967,6 +1046,36 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
             }
         }
         return $result;
+    }
+
+    /**
+     * Validates the module information request
+     *
+     * @return bool
+     *
+     * @since N/A
+     */
+    protected function getModuleInfoRequest()
+    {
+        $request = $_REQUEST;
+        return (array_key_exists('pm', $request)
+            && array_key_exists('moduleinforequest', $request)
+            && (($request['pm']) === '-1')) ? $request['moduleinforequest'] : false;
+    }
+
+    /**
+     * Determines whether the module information request is for extended info
+     *
+     * @return bool
+     *
+     * @since N/A
+     */
+    protected function isModuleExtendedInfoRequest()
+    {
+        $request = $_REQUEST;
+        return (array_key_exists('extended_info', $request)
+            && (($request['extended_info']) === 'true')
+        );
     }
 
     /**
@@ -1178,5 +1287,247 @@ class plgVmPaymentPaymentsense extends vmPSPlugin
     public function plgVmSetOnTablePluginParamsPayment($name, $id, &$table)
     {
         return $this->setOnTablePluginParams($name, $id, $table);
+    }
+
+    /**
+     * Converts HTML entities to their corresponding characters and replaces the chars that are not supported
+     * by the gateway with supported ones
+     *
+     * @param string $data A value of a variable sent to the Hosted Payment Form.
+     * @return string
+     */
+    protected function filterUnsupportedChars($data)
+    {
+        $data = html_entity_decode($data, ENT_QUOTES);
+        return str_replace(
+            array('"', '\'', '\\', '<', '>', '[', ']'),
+            array('`', '`',  '/',  '(', ')', '(', ')'),
+            $data
+        );
+    }
+
+    /**
+     * Replaces the "ampersand" (&) character with the "at" character (@).
+     * Required for Paymentsense Direct.
+     *
+     * @param string $data A value of a variable sent to the Hosted Payment Form.
+     * @return string
+     */
+    protected function replaceAmpersand($data)
+    {
+        return str_replace('&', '@', $data);
+    }
+
+    /**
+     * Applies the gateway's restrictions on the length of selected alphanumeric fields sent to the HPF
+     *
+     * @param array $data The variables sent to the Hosted Payment Form.
+     * @return array
+     */
+    protected function applyLengthRestrictions($data)
+    {
+        $result = array();
+        $maxLengths = array(
+            'OrderDescription' => 256,
+            'CustomerName'     => 100,
+            'Address1'         => 100,
+            'Address2'         => 50,
+            'Address3'         => 50,
+            'Address4'         => 50,
+            'City'             => 50,
+            'State'            => 50,
+            'PostCode'         => 50,
+            'EmailAddress'     => 100,
+            'PhoneNumber'      => 30
+        );
+        foreach ($data as $key => $value) {
+            $result[$key] = array_key_exists($key, $maxLengths)
+                ? substr($value, 0, $maxLengths[$key])
+                : $value;
+        }
+        return $result;
+    }
+
+    /**
+     * Outputs module information
+     *
+     * @param array $info Module information
+     */
+    protected function outputInfo($info)
+    {
+        $request = $_REQUEST;
+        $outputFormat = array_key_exists('output', $request) ? $request['output'] : false;
+        $contentType = is_string($outputFormat) && array_key_exists($outputFormat, $this->contentTypes)
+            ? $this->contentTypes[$outputFormat]
+            : self::TYPE_TEXT_PLAIN;
+        switch ($contentType) {
+            case self::TYPE_APPLICATION_JSON:
+                $body = json_encode($info);
+                break;
+            case self::TYPE_TEXT_PLAIN:
+            default:
+                $body = $this->convertArrayToString($info);
+                break;
+        }
+        header('Cache-Control: max-age=0, must-revalidate, no-cache, no-store');
+        header('Pragma: no-cache');
+        header('Content-Type:', $contentType);
+        echo $body;
+        exit;
+    }
+
+    /**
+     * Converts an array to string
+     *
+     * @param array  $arr An associative array.
+     * @param string $ident Identation.
+     * @return string
+     */
+    protected function convertArrayToString($arr, $ident = '')
+    {
+        $result       = '';
+        $identPattern = '  ';
+        foreach ($arr as $key => $value) {
+            if ('' !== $result) {
+                $result .= PHP_EOL;
+            }
+
+            if (is_array($value)) {
+                $value = PHP_EOL . $this->convertArrayToString($value, $ident . $identPattern);
+            }
+
+            $result .= $ident . $key . ': ' . $value;
+        }
+        return $result;
+    }
+
+    /**
+     * Gets module name
+     *
+     * @return string
+     */
+    protected function getModuleInternalName()
+    {
+        return self::MODULE_NAME;
+    }
+
+    /**
+     * Gets module installed version
+     *
+     * @return string
+     */
+    protected function getModuleInstalledVersion()
+    {
+        return self::MODULE_VERSION;
+    }
+
+    /**
+     * Gets module latest version
+     *
+     * @return string
+     */
+    protected function getModuleLatestVersion()
+    {
+        $result = 'N/A';
+        $headers = array(
+            'User-Agent: ' . $this->getModuleInternalName() . ' v.' . $this->getModuleInstalledVersion(),
+            'Content-Type: text/plain; charset=utf-8',
+            'Accept: text/plain, */*',
+            'Accept-Encoding: identity',
+            'Connection: close'
+        );
+        $data = array(
+            'url'     => 'https://api.github.com/repos/'.
+                'Paymentsense-DevSupport/paymentsense-plugin-for-virtuemart-3/releases/latest',
+            'headers' => $headers
+        );
+        if ($this->performCurl($data, $response) === 0) {
+            $json_object = @json_decode($response);
+            if (is_object($json_object) && property_exists($json_object, 'tag_name')) {
+                $result = $json_object->tag_name;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Gets Joomla version
+     *
+     * @return string
+     */
+    protected function getJoomlaVersion()
+    {
+        return JVERSION;
+    }
+
+    /**
+     * Gets VirtueMart version
+     *
+     * @return string
+     */
+    protected function getVmVersion()
+    {
+        return class_exists('vmVersion') ? vmVersion::$RELEASE : 'N/A';
+    }
+
+    /**
+     * Gets PHP version
+     *
+     * @return string
+     */
+    protected function getPhpVersion()
+    {
+        return phpversion();
+    }
+
+    /**
+     * Performs a cURL request
+     *
+     * @param array $data cURL data.
+     * @param mixed $response the result or false on failure.
+     *
+     * @return int the error number or 0 if no error occurred
+     */
+    protected function performCurl($data, &$response)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $data['headers']);
+        curl_setopt($ch, CURLOPT_URL, $data['url']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_ENCODING, 'UTF-8');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if (!empty($data['data'])) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data['data']);
+        } else {
+            curl_setopt($ch, CURLOPT_POST, false);
+        }
+        $response = curl_exec($ch);
+        $err_no   = curl_errno($ch);
+        curl_close($ch);
+        return $err_no;
+    }
+
+    /**
+     * Gets file checksums
+     *
+     * @return array
+     */
+    protected function getFileChecksums()
+    {
+        $result = array();
+        $root_path = JPATH_ROOT;
+        $request = $_REQUEST;
+        $file_list = array_key_exists('data', $request) ? $request['data'] : false;
+        if (is_array($file_list)) {
+            foreach ($file_list as $key => $file) {
+                $filename = $root_path . '/' . $file;
+                $result[$key] = is_file($filename)
+                    ? sha1_file($filename)
+                    : null;
+            }
+        }
+        return $result;
     }
 }

@@ -1,0 +1,10 @@
+# Changelog
+Paymentsense Plugin for VirtueMart 3
+
+
+## [3.0.3] - 2020-05-12
+### Added
+- Module information reporting feature
+- HMACSHA256 and HMACSHA512 hash methods
+- Filter for characters not supported by the gateway
+- Length restriction of fields sent to the gateway

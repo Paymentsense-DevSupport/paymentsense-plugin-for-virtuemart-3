@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<extension version="3.0.2" type="plugin" group="vmpayment">
+<extension version="3.0.3" type="plugin" group="vmpayment">
     <name>VM - Paymentsense</name>
-    <creationDate>April 07 2020</creationDate>
+    <creationDate>May 12 2020</creationDate>
     <author>Paymentsense Ltd.</author>
     <authorUrl>http://www.paymentsense.co.uk</authorUrl>
     <copyright>Copyright (C) 2020 PaymentSense. All rights reserved.</copyright>
     <license>https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
-    <version>3.0.2</version>
+    <version>3.0.3</version>
     <element>paymentsense</element>
     <description>
         Paymentsense payment plugin for VirtueMart, allowing you to take payments via Paymentsense. The plugin provides integration with the Paymentsense Hosted payment method.
@@ -48,6 +48,8 @@
                     <option value="MD5">MD5</option>
                     <option value="HMACSHA1">HMACSHA1</option>
                     <option value="HMACMD5">HMACMD5</option>
+                    <option value="HMACSHA256">HMACSHA256</option>
+                    <option value="HMACSHA512">HMACSHA512</option>
                 </field>
                 <field type="list"
                        name="force_notif_to_http"
